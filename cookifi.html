@@ -1,0 +1,49 @@
+<script>
+  function feedback() {
+    const p = window.Shopify.customerPrivacy;
+    console.log(`Tracking ${p.userCanBeTracked() ? "en" : "dis"}abled`);
+  }
+  
+  window.Shopify.loadFeatures(
+    [
+      {
+        name: "consent-tracking-api",
+        version: "0.1",
+      },
+    ],
+    function (error) {
+      if (error) throw error;
+    }
+  );
+  
+  // function to apply Cookifi consent values to Shopify Customer Privacy API
+  function setConsent() {
+  
+    const cookifiConsent = window.cookifi;
+    console.log("<<< Cookifi: Setting consent based on Cookifi values: ", cookifiConsent);
+  
+    window.Shopify.customerPrivacy.setTrackingConsent(
+      {
+        'analytics': cookifiConsent.analytics,
+        'marketing': cookifiConsent.marketing,
+        'preferences': cookifiConsent.preferences,
+        'sale_of_data': cookifiConsent.marketing, 
+      },
+      () => console.log("<<< Cookifi: Consent sent to pixel via CustomerPrivacyAPI.")
+    );
+  }
+  
+  // Listen to Cookifi's consent load event
+  window.addEventListener("cookifiOnConsentLoad", function () {
+    console.log("<<< Cookifi: onConsentLoad event fired!");
+    console.log("<<< Cookifi: Current consent: ", window.cookifi);
+
+    // Wait for Shopify customerPrivacy to be available before applying consent
+    const existConsentShopify = setInterval(function () {
+      if (window.Shopify.customerPrivacy) {
+        clearInterval(existConsentShopify);
+        setConsent();
+      }
+    }, 100);
+  });
+</script>

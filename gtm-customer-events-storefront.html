@@ -1,0 +1,56 @@
+<!-- create a new Snippet called 'gtm-customer-events-storefront' and paste the below code into it -->
+
+<!-- click tracking -->
+<script>
+    // function that gets the path of the clicked element. Borrowed from Simo Ahava. https://www.simoahava.com/analytics/create-css-path-variable-for-click-element/
+   function gtm_get_click_element_path(element) {
+    var el = element;
+    if (el instanceof Node) {
+      // Build the list of elements along the path
+      var elList = [];
+      do {
+        if (el instanceof Element) {
+          var classString = el.classList ? [].slice.call(el.classList).join('.') : '';
+          var elementName = (el.tagName ? el.tagName.toLowerCase() : '') + 
+              (classString ? '.' + classString : '') + 
+              (el.id ? '#' + el.id : '');
+          if (elementName) elList.unshift(elementName);
+        }
+        el = el.parentNode
+      } while (el != null);
+      // Get the stringified element object name
+      var objString = element.toString().match(/\[object (\w+)\]/);
+      var elementType = objString ? objString[1] : element.toString();
+      var cssString = elList.join(' > ');
+      // Return the CSS path as a string, prefixed with the element object name
+      return cssString ? elementType + ': ' + cssString : elementType;
+    }
+   }
+    
+   window.addEventListener("click", function(event){
+
+     // track clicks on any element and push it to Shopify customer events
+     Shopify.analytics.publish("custom_click",{
+         click_element : gtm_get_click_element_path(event.target) || '',
+         click_id : event.target.id || '',
+         click_classes : event.target.className || '',
+         click_text : event.target.innerText || '',
+         click_target : event.target.target || '',
+         click_url : event.target.href || ''
+     });
+
+     // track link clicks and push it to Shopify customer events
+     var closestLink = event.target.closest('a')
+     if (closestLink){
+       Shopify.analytics.publish("custom_link_click",{
+         click_element : gtm_get_click_element_path(closestLink.target) || '',
+         click_id : closestLink.id || '',
+         click_classes : closestLink.className || '',
+         click_text : closestLink.innerText || '',
+         click_target : closestLink.target || '',
+         click_url : closestLink.href || ''
+       })
+     }
+  });
+</script>
+<!-- end of click tracking -->
