@@ -135,13 +135,22 @@ function isCheckoutPage() {
 
 // function to get the _tracking_consent cookie value
 function getTrackingConsentCookie() {
-    const cookie = document.cookie.split('; ').find(row => row.startsWith('_tracking_consent='));
+    const cookie = document.cookie.split('; ').find(row => row.startsWith('cookifi-consent='));
     if (!cookie) return null; // no consent cookie exists
 
     try {
-        return JSON.parse(decodeURIComponent(cookie.split('=')[1]));
+        const cookieValue = decodeURIComponent(cookie.split('=')[1]);
+        const consentPairs = cookieValue.split(',');
+        const consent = {};
+
+        consentPairs.forEach(pair => {
+            const [key, value] = pair.split(':');
+            consent[key.trim()] = value.trim();
+        });
+
+        return consent;
     } catch (error) {
-        console.error('>>> PIXEL: Failed to parse _tracking_consent cookie: ', error);
+        console.error('>>> PIXEL: Failed to parse cookifi-consent cookie: ', error);
         return null;
     }
 }
@@ -156,17 +165,16 @@ if (isCheckoutPage()) {
         saleOfDataAllowed: false
     };
 
-    if (consentCookie && consentCookie.con?.CMP) {
-        // If values exist, use them
+    if (consentCookie) {
         customerPrivacyStatus = {
-            analyticsProcessingAllowed: consentCookie.con.CMP.a === "1",
-            marketingAllowed: consentCookie.con.CMP.m === "1",
-            preferencesProcessingAllowed: consentCookie.con.CMP.p === "1",
-            saleOfDataAllowed: consentCookie.con.CMP.s === "1"
+            analyticsProcessingAllowed: consentCookie.analytics === "true",
+            marketingAllowed: consentCookie.marketing === "true",
+            preferencesProcessingAllowed: consentCookie.preferences === "true",
+            saleOfDataAllowed: consentCookie.marketing === "true"
         };
     }
 
-    pixelLog('Checkout detected - Using _tracking_consent cookie: ', consentCookie, 'Parsed as: ', customerPrivacyStatus);
+    pixelLog('Checkout detected - Using cookifi-consent cookie: ', consentCookie, 'Parsed as: ', customerPrivacyStatus);
 
     // Google Consent Mode - Update command
     gtag('consent', 'update', {
