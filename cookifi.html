@@ -17,9 +17,8 @@
   );
   
   // function to apply Cookifi consent values to Shopify Customer Privacy API
-  function setConsent() {
+  function setConsent(cookifiConsent) {
   
-    const cookifiConsent = window.cookifi;
     console.log("<<< Cookifi: Setting consent based on Cookifi values: ", cookifiConsent);
   
     window.Shopify.customerPrivacy.setTrackingConsent(
@@ -34,16 +33,20 @@
   }
   
   // Listen to Cookifi's consent load event
-  window.addEventListener("cookifiOnConsentLoad", function () {
+  window.addEventListener("cookifiOnConsentLoad", function (ev) {
+
+    const cookifiConsent = ev.detail;
+    
     console.log("<<< Cookifi: onConsentLoad event fired!");
-    console.log("<<< Cookifi: Current consent: ", window.cookifi);
+    console.log("<<< Cookifi: Current consent: ", cookifiConsent);
 
     // Wait for Shopify customerPrivacy to be available before applying consent
     const existConsentShopify = setInterval(function () {
       if (window.Shopify.customerPrivacy) {
         clearInterval(existConsentShopify);
-        setConsent();
+        setConsent(cookifiConsent);
       }
     }, 100);
   });
+
 </script>
